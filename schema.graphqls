@@ -1,0 +1,45 @@
+scalar Time
+
+scalar Cursor
+
+type Query {
+    items(first: Int! = 0, limit: Int! = 10): ItemConnection!
+}
+
+type Mutation {
+    addItem(item: NewItem!): Boolean!
+    removeItem(id: ID!): Boolean!
+}
+
+input NewItem {
+    title: String!
+    content: String
+}
+
+type Item implements Node {
+    id: ID!
+    title: String!
+    content: String
+    createdAt: Time!
+}
+
+type ItemConnection {
+    edges: [ItemEdge!]!
+    pageInfo: PageInfo!
+}
+
+type ItemEdge {
+    node: Item!
+    cursor: Cursor!
+}
+
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  endCursor: Cursor!
+  startCursor: Cursor!
+}
+
+interface Node {
+    id: ID!
+}

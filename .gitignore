@@ -1,0 +1,5 @@
+*.exe
+__debug_bin
+
+*_gen.go
+.env
