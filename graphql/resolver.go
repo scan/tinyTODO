@@ -21,7 +21,7 @@ func NewResolver(logger *zap.Logger) *Resolver {
 	}
 }
 
-func (r *mutationResolver) AddItem(ctx context.Context, newItem NewItem) (bool, error) {
+func (r *mutationResolver) AddItem(ctx context.Context, newItem NewItem) (*Item, error) {
 	item := Item{
 		ID:        uuid.New().String(),
 		Title:     newItem.Title,
@@ -31,7 +31,7 @@ func (r *mutationResolver) AddItem(ctx context.Context, newItem NewItem) (bool, 
 
 	r.items = append(r.items, &item)
 
-	return true, nil
+	return &item, nil
 }
 
 func (r *mutationResolver) RemoveItem(ctx context.Context, id string) (bool, error) {

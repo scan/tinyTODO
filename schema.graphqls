@@ -7,7 +7,7 @@ type Query {
 }
 
 type Mutation {
-    addItem(item: NewItem!): Boolean!
+    addItem(item: NewItem!): Item
     removeItem(id: ID!): Boolean!
 }
 
