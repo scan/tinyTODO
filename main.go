@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"os"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
+	"github.com/go-redis/redis/v8"
 
 	"github.com/gorilla/websocket"
 
@@ -28,6 +30,16 @@ func main() {
 		log.Fatalf("cannot initialise zap logger: %v", err)
 	}
 	defer logger.Sync()
+
+	redisClient := redis.NewClient(&redis.Options{
+		Addr:     "localhost:6379",
+		Password: "", // no password set
+		DB:       0,  // use default DB
+	})
+	if err := redisClient.Ping(context.Background()).Err(); err != nil {
+		logger.Fatal("redis connection failed", zap.Error(err))
+	}
+	defer redisClient.Close()
 
 	router := chi.NewRouter()
 
@@ -59,7 +71,7 @@ func main() {
 	}
 
 	config := graphql.Config{
-		Resolvers: graphql.NewResolver(logger),
+		Resolvers: graphql.NewResolver(logger, redisClient),
 	}
 
 	graphqlHandler := handler.New(
