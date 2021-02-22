@@ -8,6 +8,7 @@ require (
 	github.com/go-redis/redis/v8 v8.6.0
 	github.com/google/uuid v1.2.0
 	github.com/gorilla/websocket v1.4.2
+	github.com/pkg/errors v0.8.1
 	github.com/vektah/gqlparser/v2 v2.1.0
 	go.uber.org/zap v1.16.0
 )
