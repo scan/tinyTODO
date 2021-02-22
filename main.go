@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	chilogger "github.com/766b/chi-logger"
 	"go.uber.org/zap"
 
 	"github.com/go-chi/chi"
@@ -48,7 +49,7 @@ func main() {
 		middleware.RequestID,
 		middleware.RealIP,
 		middleware.Heartbeat("/health"),
-		middleware.Logger,
+		chilogger.NewZapMiddleware("router", logger),
 		middleware.Compress(6, "test/plain", "text/html", "application/json"),
 	)
 

@@ -108,8 +108,6 @@ func (r *queryResolver) Items(ctx context.Context, first, limit int, after *stri
 
 	lastPage := len(ids) < limit
 
-	r.logger.Info("Cursor info", zap.Int("id length", len(ids)), zap.Int("first", first), zap.Int("limit", limit))
-
 	items := make([]Item, len(ids))
 	for i, id := range ids {
 		str, err := r.redisClient.Get(ctx, keyForID(id)).Result()
