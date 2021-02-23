@@ -4,7 +4,6 @@ import (
 	"context"
 	"log"
 	"net/http"
-	"os"
 	"time"
 
 	chilogger "github.com/766b/chi-logger"
@@ -59,7 +58,7 @@ func main() {
 			MaxAge:           300, // Maximum value not ignored by any of major browsers
 		}),
 		chilogger.NewZapMiddleware("router", logger),
-		middleware.Compress(6, "test/plain", "text/html", "application/json"),
+		middleware.Compress(6, "text/plain", "text/html", "application/json"),
 	)
 
 	router.Get("/health", func(w http.ResponseWriter, r *http.Request) {
@@ -70,10 +69,6 @@ func main() {
 
 	websocketUpgrader := websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {
-			if origin, ok := os.LookupEnv("ALLOWED_CORS_ORIGIN"); ok {
-				return r.Host == origin
-			}
-
 			return true
 		},
 		ReadBufferSize:  1024,
