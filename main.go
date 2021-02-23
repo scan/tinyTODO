@@ -12,6 +12,7 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
+	"github.com/go-chi/cors"
 	"github.com/go-redis/redis/v8"
 
 	"github.com/gorilla/websocket"
@@ -49,6 +50,14 @@ func main() {
 		middleware.RequestID,
 		middleware.RealIP,
 		middleware.Heartbeat("/health"),
+		cors.Handler(cors.Options{
+			AllowedOrigins:   []string{"*"},
+			AllowedMethods:   []string{"GET", "POST", "OPTIONS"},
+			AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+			ExposedHeaders:   []string{"Link"},
+			AllowCredentials: false,
+			MaxAge:           300, // Maximum value not ignored by any of major browsers
+		}),
 		chilogger.NewZapMiddleware("router", logger),
 		middleware.Compress(6, "test/plain", "text/html", "application/json"),
 	)
