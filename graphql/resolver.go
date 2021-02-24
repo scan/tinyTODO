@@ -86,8 +86,8 @@ func (r *mutationResolver) RemoveItem(ctx context.Context, id string) (bool, err
 	return true, nil
 }
 
-func (r *queryResolver) Items(ctx context.Context, first, limit int, after *string) (*ItemConnection, error) {
-	last := int64(first + limit - 1)
+func (r *queryResolver) Items(ctx context.Context, count int, after *string) (*ItemConnection, error) {
+	var first, last int64
 
 	if after != nil {
 		c, err := decodeCursor(*after)
@@ -95,10 +95,11 @@ func (r *queryResolver) Items(ctx context.Context, first, limit int, after *stri
 			return nil, errors.Wrapf(err, "issue decoding the cursor")
 		}
 
-		first = c.Start + first
-		if c.Limit > 0 {
-			limit = c.Limit
-		}
+		first = int64(c.Start)
+		last = first + int64(count) - 1
+	} else {
+		first = int64(0)
+		last = int64(count - 1)
 	}
 
 	ids, err := r.redisClient.ZRange(ctx, allIDsKey, int64(first), last).Result()
@@ -106,25 +107,23 @@ func (r *queryResolver) Items(ctx context.Context, first, limit int, after *stri
 		return nil, err
 	}
 
-	lastPage := len(ids) < limit
+	lastPage := len(ids) < count
 
-	items := make([]Item, len(ids))
+	edges := make([]*ItemEdge, len(ids))
 	for i, id := range ids {
 		str, err := r.redisClient.Get(ctx, keyForID(id)).Result()
 		if err != nil {
 			return nil, err
 		}
 
-		if items[i], err = newItemFromRedisEntry([]byte(str)); err != nil {
+		item, err := newItemFromRedisEntry([]byte(str))
+		if err != nil {
 			return nil, err
 		}
-	}
 
-	edges := make([]*ItemEdge, len(items))
-	for i, item := range items {
 		edges[i] = &ItemEdge{
 			Node:   &item,
-			Cursor: cursor{Start: first + i, Limit: limit}.String(), // TODO
+			Cursor: cursor{Start: int(last) + i}.String(),
 		}
 	}
 
@@ -133,8 +132,8 @@ func (r *queryResolver) Items(ctx context.Context, first, limit int, after *stri
 		PageInfo: &PageInfo{
 			HasPreviousPage: first > 0,
 			HasNextPage:     !lastPage,
-			EndCursor:       cursor{Start: first + limit, Limit: limit}.String(),
-			StartCursor:     cursor{Start: first, Limit: limit}.String(),
+			EndCursor:       cursor{Start: int(last) + 1}.String(),
+			StartCursor:     cursor{Start: int(first)}.String(),
 		},
 	}, nil
 }

@@ -3,7 +3,7 @@ scalar Time
 scalar Cursor
 
 type Query {
-    items(first: Int! = 0, limit: Int! = 10, after: Cursor): ItemConnection!
+    items(first: Int! = 10, after: Cursor): ItemConnection!
 }
 
 type Mutation {

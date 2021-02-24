@@ -7,7 +7,6 @@ import (
 
 type cursor struct {
 	Start int `json:"s,omitempty"`
-	Limit int `json:"l,omitempty"`
 }
 
 func decodeCursor(str string) (cursor, error) {
