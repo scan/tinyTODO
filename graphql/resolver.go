@@ -38,10 +38,10 @@ func (r *mutationResolver) AddItem(ctx context.Context, newItem NewItem) (*model
 		ID:        uuid.New().String(),
 		Title:     newItem.Title,
 		Content:   newItem.Content,
-		CreatedAt: time.Now(),
+		CreatedAt: time.Now().UTC(),
 	}
 
-	if err := r.repo.InsertItem(&item); err != nil {
+	if err := r.repo.InsertItem(ctx, &item); err != nil {
 		return nil, err
 	}
 
@@ -49,7 +49,7 @@ func (r *mutationResolver) AddItem(ctx context.Context, newItem NewItem) (*model
 }
 
 func (r *mutationResolver) RemoveItem(ctx context.Context, id string) (bool, error) {
-	if err := r.repo.RemoveItem(id); err != nil {
+	if err := r.repo.RemoveItem(ctx, id); err != nil {
 		return false, err
 	}
 
@@ -70,7 +70,7 @@ func (r *queryResolver) Items(ctx context.Context, limit int, after *string) (*I
 		before = c.Before
 	}
 
-	items, err := r.repo.LoadItemsBefore(offset, limit, before)
+	items, err := r.repo.LoadItemsBefore(ctx, offset, limit, before)
 	if err != nil {
 		return nil, err
 	}

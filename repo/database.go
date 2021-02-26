@@ -1,6 +1,7 @@
 package repo
 
 import (
+	"context"
 	"database/sql"
 	"time"
 
@@ -12,10 +13,10 @@ import (
 type Repository interface {
 	Close() error
 
-	InsertItem(*model.Item) error
-	RemoveItem(string) error
+	InsertItem(context.Context, *model.Item) error
+	RemoveItem(context.Context, string) error
 
-	LoadItemsBefore(int, int, time.Time) ([]*model.Item, error)
+	LoadItemsBefore(context.Context, int, int, time.Time) ([]*model.Item, error)
 }
 
 type repo struct {
@@ -27,8 +28,22 @@ CREATE TABLE IF NOT EXISTS items (
     id TEXT PRIMARY KEY,
     title TEXT NOT NULL,
     content TEXT NULL DEFAULT NULL,
-    createdAt TEXT NOT NULL
-)
+    createdAt DATETIME NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_created ON items(createdAt);
+`
+
+const insertItemStatement = `
+INSERT INTO items (id, title, content, createdAt) VALUES (?, ?, ?, ?)
+`
+
+const removeItemStatement = `
+DELETE FROM items WHERE id = ?
+`
+
+const queryItemsStatement = `
+SELECT id, title, content, createdAt FROM items WHERE createdAt <= ? ORDER BY createdAt DESC LIMIT ? OFFSET ?
 `
 
 func Open() (Repository, error) {
@@ -52,14 +67,56 @@ func (r *repo) Close() error {
 	return r.db.Close()
 }
 
-func (r *repo) InsertItem(item *model.Item) error {
+func (r *repo) InsertItem(ctx context.Context, item *model.Item) error {
+	statement, err := r.db.PrepareContext(ctx, insertItemStatement)
+	if err != nil {
+		return err
+	}
+
+	if _, err := statement.ExecContext(ctx, item.ID, item.Title, item.Content, item.CreatedAt); err != nil {
+		return err
+	}
+
 	return nil
 }
 
-func (t *repo) RemoveItem(id string) error {
+func (r *repo) RemoveItem(ctx context.Context, id string) error {
+	statement, err := r.db.PrepareContext(ctx, removeItemStatement)
+	if err != nil {
+		return err
+	}
+
+	if _, err := statement.ExecContext(ctx, id); err != nil {
+		return err
+	}
+
 	return nil
 }
 
-func (t *repo) LoadItemsBefore(offset, limit int, before time.Time) ([]*model.Item, error) {
-	return nil, nil
+func (r *repo) LoadItemsBefore(ctx context.Context, offset, limit int, before time.Time) ([]*model.Item, error) {
+	rows, err := r.db.QueryContext(ctx, queryItemsStatement, before, limit, offset)
+	if err != nil {
+		return []*model.Item{}, err
+	}
+	defer rows.Close()
+
+	items := make([]*model.Item, 0, limit)
+	for rows.Next() {
+		var title, id string
+		var content *string
+		var createdAt time.Time
+
+		if err := rows.Scan(&id, &title, &content, &createdAt); err != nil {
+			return []*model.Item{}, err
+		}
+
+		items = append(items, &model.Item{
+			ID:        id,
+			Title:     title,
+			Content:   content,
+			CreatedAt: createdAt,
+		})
+	}
+
+	return items, nil
 }
