@@ -16,4 +16,4 @@ models:
         model:
         - github.com/99designs/gqlgen/graphql.ID
     Item:
-        model: github.com/scan/tinyTODO/graphql.Item
+        model: github.com/scan/tinyTODO/model.Item

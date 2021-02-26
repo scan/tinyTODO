@@ -1,4 +1,4 @@
-package graphql
+package model
 
 import (
 	"encoding/json"
@@ -14,7 +14,7 @@ type Item struct {
 
 func (Item) IsNode() {}
 
-func newItemFromRedisEntry(str []byte) (Item, error) {
+func NewItemFromRedisEntry(str []byte) (Item, error) {
 	var item Item
 	if err := json.Unmarshal(str, &item); err != nil {
 		return Item{}, err
@@ -22,6 +22,6 @@ func newItemFromRedisEntry(str []byte) (Item, error) {
 	return item, nil
 }
 
-func (i Item) asRedisEntry() ([]byte, error) {
+func (i Item) AsRedisEntry() ([]byte, error) {
 	return json.Marshal(i)
 }

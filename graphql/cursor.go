@@ -3,10 +3,12 @@ package graphql
 import (
 	"encoding/base64"
 	"encoding/json"
+	"time"
 )
 
 type cursor struct {
-	Start int `json:"s,omitempty"`
+	Start  int       `json:"s,omitempty"`
+	Before time.Time `json:"t,omitempty"`
 }
 
 func decodeCursor(str string) (cursor, error) {

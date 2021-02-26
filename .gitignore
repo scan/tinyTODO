@@ -3,3 +3,6 @@ __debug_bin
 
 *_gen.go
 .env
+
+*.sqlite*
+*.db

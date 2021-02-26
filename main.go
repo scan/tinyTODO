@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"log"
 	"net/http"
 	"time"
@@ -12,7 +11,6 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/cors"
-	"github.com/go-redis/redis/v8"
 
 	"github.com/gorilla/websocket"
 
@@ -21,6 +19,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 
 	"github.com/scan/tinyTODO/graphql"
+	"github.com/scan/tinyTODO/repo"
 )
 
 //go:generate go run github.com/99designs/gqlgen
@@ -32,15 +31,11 @@ func main() {
 	}
 	defer logger.Sync()
 
-	redisClient := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
-		Password: "", // no password set
-		DB:       0,  // use default DB
-	})
-	if err := redisClient.Ping(context.Background()).Err(); err != nil {
-		logger.Fatal("redis connection failed", zap.Error(err))
+	repo, err := repo.Open()
+	if err != nil {
+		logger.Fatal("database connection failed", zap.Error(err))
 	}
-	defer redisClient.Close()
+	defer repo.Close()
 
 	router := chi.NewRouter()
 
@@ -76,7 +71,7 @@ func main() {
 	}
 
 	config := graphql.Config{
-		Resolvers: graphql.NewResolver(logger, redisClient),
+		Resolvers: graphql.NewResolver(logger, repo),
 	}
 
 	graphqlHandler := handler.New(
