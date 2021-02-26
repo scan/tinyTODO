@@ -7,6 +7,10 @@ import (
 
 	_ "github.com/mattn/go-sqlite3"
 
+	sqldblogger "github.com/simukti/sqldb-logger"
+	"github.com/simukti/sqldb-logger/logadapter/zapadapter"
+	"go.uber.org/zap"
+
 	"github.com/scan/tinyTODO/model"
 )
 
@@ -34,23 +38,21 @@ CREATE TABLE IF NOT EXISTS items (
 CREATE INDEX IF NOT EXISTS idx_created ON items(createdAt);
 `
 
-const insertItemStatement = `
-INSERT INTO items (id, title, content, createdAt) VALUES (?, ?, ?, ?)
-`
+const insertItemStatement = `INSERT INTO items (id, title, content, createdAt) VALUES (?, ?, ?, ?)`
 
-const removeItemStatement = `
-DELETE FROM items WHERE id = ?
-`
+const removeItemStatement = `DELETE FROM items WHERE id = ?`
 
-const queryItemsStatement = `
-SELECT id, title, content, createdAt FROM items WHERE createdAt <= ? ORDER BY createdAt DESC LIMIT ? OFFSET ?
-`
+const queryItemsStatement = `SELECT id, title, content, createdAt FROM items WHERE createdAt <= ? ORDER BY createdAt DESC LIMIT ? OFFSET ?`
 
-func Open() (Repository, error) {
-	db, err := sql.Open("sqlite3", "./tinyTODO.db")
+func Open(logger *zap.Logger) (Repository, error) {
+	dsn := "./tinyTODO.db"
+	db, err := sql.Open("sqlite3", dsn)
 	if err != nil {
 		return nil, err
 	}
+
+	loggerAdapter := zapadapter.New(logger)
+	db = sqldblogger.OpenDriver(dsn, db.Driver(), loggerAdapter)
 
 	statement, err := db.Prepare(createTableStatement)
 	if err != nil {

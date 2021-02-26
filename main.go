@@ -31,7 +31,7 @@ func main() {
 	}
 	defer logger.Sync()
 
-	repo, err := repo.Open()
+	repo, err := repo.Open(logger)
 	if err != nil {
 		logger.Fatal("database connection failed", zap.Error(err))
 	}
